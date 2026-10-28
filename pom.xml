@@ -62,7 +62,8 @@
                 <version>3.4.4</version>
                 <configuration>
                     <from>
-                        <image>eclipse-temurin:17-jre-alpine</image>
+                        <!-- docker.io 直连超时，走国内镜像站拉基础镜像（层内容一致） -->
+                        <image>docker.1ms.run/library/eclipse-temurin:17-jre-alpine</image>
                     </from>
                     <to>
                         <image>docker.io/library/mall-agent</image>
