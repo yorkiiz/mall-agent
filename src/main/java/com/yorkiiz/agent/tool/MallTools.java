@@ -54,15 +54,23 @@ public class MallTools {
             @ToolParam(required = false, description = "价格上限（元），无要求时不传") Double maxPrice) {
         log.info("[Tool] searchProducts keyword={} min={} max={}", keyword, minPrice, maxPrice);
         String result = mall.searchProducts(keyword, minPrice, maxPrice);
-        // 记录实际参数，供 ChatController 返回给前端渲染"查看商品"按钮
-        this.lastKeyword = (keyword == null || keyword.isBlank()) ? "" : keyword.trim();
-        this.lastMinPrice = minPrice;
-        this.lastMaxPrice = maxPrice;
-        this.lastMatched = 0;
-        try {
-            JsonNode node = OM.readTree(result);
-            this.lastMatched = node.path("total").asInt(0);
-        } catch (Exception ignore) {
+        // 记录实际参数，供 ChatController 返回给前端渲染"查看商品"按钮。
+        // 模型一轮里可能多次调用本工具（如先筛选再无条件下单铺垫）：
+        // 带筛选条件的调用才覆盖记录；无条件的搜索只在从未记录过时兜底，
+        // 避免按钮从"41 条筛选结果"被后续无脑全量搜索覆盖成 320。
+        boolean hasFilter = (keyword != null && !keyword.isBlank())
+                || (minPrice != null && minPrice > 0)
+                || (maxPrice != null && maxPrice > 0);
+        if (hasFilter || lastMatched < 0) {
+            this.lastKeyword = (keyword == null || keyword.isBlank()) ? "" : keyword.trim();
+            this.lastMinPrice = minPrice;
+            this.lastMaxPrice = maxPrice;
+            this.lastMatched = 0;
+            try {
+                JsonNode node = OM.readTree(result);
+                this.lastMatched = node.path("total").asInt(0);
+            } catch (Exception ignore) {
+            }
         }
         return result;
     }
