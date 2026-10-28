@@ -1,0 +1,84 @@
+# mall-agent k8s 部署
+# 设计要点：
+# 1. nodeSelector 固定到 slave2 —— AI 模型 API 需要公网出方向流量，
+#    slave1 无公网 IP（无 NAT 出口），部署上去 API 全部超时
+# 2. AI_API_KEY 走 Secret，不进镜像不进 ConfigMap
+# 3. 探针用 actuator health，方便 Prometheus 抓 up 指标 + 告警规则复用
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mall-agent-secret
+  namespace: default
+type: Opaque
+stringData:
+  AI_API_KEY: "sk-替换成你的DeepSeek密钥"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mall-agent
+  namespace: default
+  labels:
+    app: mall-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mall-agent
+  template:
+    metadata:
+      labels:
+        app: mall-agent
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: slave2
+      containers:
+        - name: mall-agent
+          image: docker.io/library/mall-agent:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: MALL_API_BASE
+              value: http://backend-svc:8080
+            - name: AI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mall-agent-secret
+                  key: AI_API_KEY
+            # 可选：换模型/供应商时，在 env 里追加 AI_BASE_URL / AI_MODEL 两个变量（见 README）
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 100m
+            limits:
+              memory: 512Mi
+              cpu: 500m
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 40
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mall-agent-svc
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: mall-agent
+  ports:
+    - port: 8081
+      targetPort: 8081

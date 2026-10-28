@@ -1,0 +1,28 @@
+server:
+  # 8081：本地与商城后端(8080)并存；集群内 Service 端口映射已同步
+  port: 8081
+
+spring:
+  application:
+    name: mall-agent
+  profiles:
+    # 本地默认 local（Ollama），集群里通过 env SPRING_PROFILES_ACTIVE=prod 覆盖
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+mall:
+  api:
+    # 本地直连后端；集群内由 env 覆盖为 http://backend-svc:8080
+    base-url: ${MALL_API_BASE:http://localhost:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    com.yorkiiz.agent: INFO

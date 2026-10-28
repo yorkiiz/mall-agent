@@ -1,0 +1,11 @@
+# 本地开发：Ollama（OpenAI 兼容端点）
+# 注意：qwen2:7b 支持 function calling；若工具调用不稳定，建议 ollama pull qwen2.5:7b 后把 model 改掉
+spring:
+  ai:
+    openai:
+      base-url: http://localhost:11434
+      api-key: ollama   # Ollama 不校验，占位即可
+      chat:
+        options:
+          model: qwen2:7b
+          temperature: 0.7

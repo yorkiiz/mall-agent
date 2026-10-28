@@ -1,0 +1,11 @@
+# 生产（k8s）：DeepSeek API，OpenAI 兼容协议
+# AI_API_KEY 由 k8s Secret 注入，不要写死在配置里
+spring:
+  ai:
+    openai:
+      base-url: ${AI_BASE_URL:https://api.deepseek.com}
+      api-key: ${AI_API_KEY}
+      chat:
+        options:
+          model: ${AI_MODEL:deepseek-chat}
+          temperature: 0.7
