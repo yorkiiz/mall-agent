@@ -11,7 +11,7 @@ metadata:
   namespace: default
 type: Opaque
 stringData:
-  AI_API_KEY: "sk-替换成你的DeepSeek密钥"
+  AI_API_KEY: "sk-7c36066dbf0d47d6b55d72fe4d0f7eed"
 ---
 apiVersion: apps/v1
 kind: Deployment
